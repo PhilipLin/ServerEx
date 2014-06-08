@@ -1,6 +1,6 @@
 var net = require('net');
 var readline = require('readline');
-var HOST = '127.0.0.1';
+var HOST = '54.213.69.170';
 var PORT = 6969;
 
 var client = new net.Socket();
