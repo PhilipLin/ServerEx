@@ -1,6 +1,6 @@
 var net = require('net');
 var HOST = '127.0.0.1';
-var PORT = 6969;
+var PORT = process.env.PORT || 6969;
 
 var rooms = [{'name':'chat','people':[]},{'name':'hottub','people':[]}];
 var people = [{'name':'','socket':'','room':false,'inRoom':''},
