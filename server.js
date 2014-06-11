@@ -12,15 +12,17 @@ var decoder = new StringDecoder('utf8');
 net.createServer(function(sock) {
     greeting(sock);
     sock.on('data', function(data) {
+        var temp = decoder.write(data).slice(0,-2);
+        //console.log(decoder.write(data).slice(0, - 1));
         if(hasLogin(sock)==false){
             login(sock,data);
         }
         else{
-            if(decoder.write(data)=="\/rooms"){
+            if(temp=="\/rooms"){
                 greeting2(sock);//tells client availible rooms
             }
-            else if(decoder.write(data)=="\/quit"){
-                sock.write('<= BYE')
+            else if(temp=="\/quit"){
+                sock.write('<= BYE\n')
                 removePerson(sock);
                 leaveRoom(sock,getPerson(sock).inRoom);
                 greeting(sock);
@@ -30,18 +32,22 @@ net.createServer(function(sock) {
             }
             else{
                 var temp_person = getPerson(sock);
-                broadcastSockets(temp_person.name+": "+decoder.write(data),temp_person.inRoom);
-                if(decoder.write(data)=="\/leave"){
+                broadcastSockets(temp_person.name+": "+temp+"\n",temp_person.inRoom);
+                if(temp=="\/leave"){
                     broadcastSockets("* user has left chat: "+temp_person.name+"\n",temp_person.inRoom);
                     leaveRoom(sock,temp_person.inRoom);
                 }
             }
         }
     });
-    //how to handle sudden closing from the client-side?????
-    sock.on('end', function(data) {
-        removePerson(sock);
+    sock.on("error", function(data){
+        console.log("A socket just closed itself abruptly");
         leaveRoom(sock,getPerson(sock).inRoom);
+        removePerson(sock);
+    });
+    sock.on('end', function(data) {
+        leaveRoom(sock,getPerson(sock).inRoom);
+        removePerson(sock);
         console.log('CLOSED: ' + sock.remoteAddress +' '+ sock.remotePort);
     });
 }).listen(PORT, HOST);
@@ -52,7 +58,7 @@ console.log('Server listening on ' + HOST +':'+ PORT);
 
 
 function login(sock,data){
-    var logindata = decoder.write(data)
+    var logindata = decoder.write(data).slice(0,-2);
     if(containsName(people,logindata)==false){
         sock.write('<= Welcome '+logindata+'!\n');
         people.push({'name':logindata,'socket':sock,'room':false,'inRoom':''});//add client to people availible
@@ -62,7 +68,7 @@ function login(sock,data){
     }
 }
 function enterroom(sock,data){
-    var roomdata = decoder.write(data);
+    var roomdata = decoder.write(data).slice(0,-2);
     if(containsaddRoom(roomdata,sock)){
         for(var i =0;i<rooms.length;i++){
             if(roomdata ==('\/join '+rooms[i].name)){
@@ -131,14 +137,12 @@ function leaveRoom(sock,room){
         if(rooms[i].name==room){
             for(var i2=0;i2<rooms[i].people.length;i2++){
                 if(rooms[i].people[i2].socket==sock)
-                    rooms[i].people.splice(i, 1);
+                    rooms[i].people.splice(i2, 1);
             }
         }
     }
-    console.log()
 }
 function hasRoom(sock){
-    console.log('hasRoom');
     for(var i=0;i<people.length;i++){
         if(people[i].socket==sock && people[i].room==true)
             return true;
