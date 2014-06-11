@@ -42,6 +42,7 @@ net.createServer(function(sock) {
     });
     sock.on("error", function(data){
         console.log("A socket just closed itself abruptly");
+        broadcastSockets("* user has left chat: "+temp_person.name+"\n",temp_person.inRoom);
         leaveRoom(sock,getPerson(sock).inRoom);
         removePerson(sock);
     });
